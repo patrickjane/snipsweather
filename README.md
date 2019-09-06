@@ -1,4 +1,4 @@
-# Snips Lights + DarkSky Weather
+# Snips + DarkSky Weather
 
 App zur Abfrage von Wetterinformationen von DarkSky (www.darksky.net). Es sind Abfragen bis zu 7 Tage in die Zukunft möglich.
 
