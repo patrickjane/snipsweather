@@ -146,6 +146,8 @@ class App(object):
         except:
             pass
 
+        self.logger.debug("Intent {} with city {} and time {}".format(intent_message.intent.intent_name, city if city else '-', time if time else '-'))
+
         self.query_weather(hermes, intent_message, intent_message.intent.intent_name, city, time)
 
     # -------------------------------------------------------------------------
@@ -212,6 +214,8 @@ class App(object):
         if not weather or not weather[0] or (scale == 'daily' and not weather[1]):
             self.logger.warning('Failed to get weather info for requested range ({} - {})'.format(tme_from, tme_to))
             return None
+
+        self.logger.debug("Check weather with scale {} and prefix {}".format(scale, prefix))
 
         if intent_name == 's710:getForecast':
             return self.process_forecast(hermes, intent_name, response_content, scale, weather, prefix)
@@ -314,19 +318,15 @@ class App(object):
         if scale == 'currently' and 'temperature' in weather:
             return 'Es sind gerade ' + str(round(weather['temperature'])) + ' Grad.'
         
-        elif scale == 'hourly':
+        else:
+            weather = weather_hours_and_days[0]
+
             if len(weather) == 1:
                 return prefix + ' wird es etwa ' + str(round(weather[0]['temperature'])) + ' Grad warm.'
 
             temps = [w['temperature'] for w in weather]
 
             return prefix + ' wird es zwischen ' + str(round(min(temps))) + ' und ' + str(round(max(temps))) +  ' Grad warm.'
-        
-        elif scale == 'daily':
-            temps_max = [w['temperatureMax'] for w in weather]
-            temps_min = [w['temperatureMin'] for w in weather]
-
-            return prefix + ' wird es zwischen ' + str(round(min(temps_min))) + ' und ' + str(round(max(temps_max))) +  ' Grad warm.'
 
         return None
 
@@ -537,7 +537,7 @@ if __name__ == "__main__":
     app = App()
 
     # app.query_weather(None, None, "s710:getForecast", "Hamburg", "morgen nachmittag")
-    # app.query_weather(None, None, "s710:hasSun", "Sevilla", None)
+    # app.query_weather(None, None, "s710:getTemperature", None, "jetzt")
     # app.query_weather(None, None, "s710:hasRain", "London", None)
     # app.query_weather(None, None, "s710:hasSnow", "Helsinki", None)
 
