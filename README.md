@@ -12,7 +12,7 @@ In der kostenlosen Version sind 1000 Aufrufe pro Tag möglich.
 
 #### 2) Installation der Snips-App
 
-Installation der Weather App aus dem Store: https://console.snips.ai/store/de/XXXXXXXXXX
+Installation der Weather App aus dem Store: https://console.snips.ai/store/de/skill_lyXWObV8NA8
 
 #### 3) Assistant via `sam` installieren/aktualisieren
 
