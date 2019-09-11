@@ -103,7 +103,7 @@ class App(object):
         except Exception as e:
             self.logger.error("Error: Failed to determine homecity coordinates for '{}' ({})".format(homecity, e))
 
-        #self.start()
+        self.start()
 
     # -----------------------------------------------------------------------------
     # read_toml
@@ -565,6 +565,6 @@ if __name__ == "__main__":
 
     # app.query_weather(None, None, "s710:getForecast", "Hamburg", "morgen nachmittag")
     # app.query_weather(None, None, "s710:getTemperature", None, "jetzt")
-    app.query_weather(None, None, "s710:hasSun", None, "übermorgen")
+    # app.query_weather(None, None, "s710:hasSun", None, "übermorgen")
     # app.query_weather(None, None, "s710:hasSnow", "Helsinki", None)
 
