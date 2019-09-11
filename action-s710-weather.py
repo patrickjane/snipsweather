@@ -103,7 +103,7 @@ class App(object):
         except Exception as e:
             self.logger.error("Error: Failed to determine homecity coordinates for '{}' ({})".format(homecity, e))
 
-        self.start()
+        #self.start()
 
     # -----------------------------------------------------------------------------
     # read_toml
@@ -335,6 +335,7 @@ class App(object):
 
     def process_has(self, hermes, intent_name, what, response_content, scale, weather_hours_and_days, prefix):
         weather = weather_hours_and_days[0]
+        weather_days = weather_hours_and_days[1]
 
         if scale == 'currently':
             if what == 'sun':
@@ -354,24 +355,50 @@ class App(object):
 
                 return 'Ja, es ' + ('regnet gerade.' if what == 'rain' else 'schneit gerade.')
         else:
-            has = [w for w in weather if w['icon'] == what or ('precipType' in w and w['precipType'] == what and 'precipProbability' in w and w['precipProbability'] > 0.3)]
+            if what == 'sun':
+                hasSun = [w for w in weather if w['icon'] == 'clear-day']
+                hasPartly = [w for w in weather if w['icon'] == 'partly-cloudy-day']
 
-            if not has:
-                return 'Nein, ich denke nicht.'
+                if not hasSun and not hasPartly:
+                    return 'Nein, ich denke nicht.'
 
-            w = has[0]
-            dt = datetime.fromtimestamp(w['time'])
-            day = self.weekdays[dt.weekday()]
-            prob = ''
-            when = dt.strftime("%H:%M Uhr")
+                w = hasSun[0] if hasSun else hasPartly[0]
+                dt = datetime.fromtimestamp(w['time'])
+                day = self.weekdays[dt.weekday()]
+                when = dt.strftime("%H:%M Uhr")
 
-            if what != 'sun' and w['precipProbability'] < 0.3:
-                return 'Nein, ich denke nicht.'
+                if scale == 'hourly':
+                    return 'Gegen ' + when + ' wird es ' + ('sonnig.' if hasSun else ('ein bisschen Sonne geben.'))
+                elif len(weather_days) == 1:
+                    return prefix + ' wird es gegen ' + when + ' ' + ('sonnig.' if hasSun else ('ein bisschen Sonne geben.'))
 
-            if what != 'sun' and w['precipProbability'] < 0.75:
-                prob = ' vermutlich'
+                return 'Am ' + day.capitalize() + ' wird es gegen ' + when + ' ' + ('sonnig.' if hasSun else ('ein bisschen Sonne geben.'))
+            else:
+                hasRain = [w for w in weather if w['icon'] == 'rain' or ('precipType' in w and w['precipType'] == what and 'precipProbability' in w and w['precipProbability'] > 0.3)]
+                hasHail = [w for w in weather if w['icon'] == 'hail' or ('precipType' in w and w['precipType'] == what and 'precipProbability' in w and w['precipProbability'] > 0.3)]
+                hasThunder = [w for w in weather if w['icon'] == 'thunderstorm' or ('precipType' in w and w['precipType'] == what and 'precipProbability' in w and w['precipProbability'] > 0.3)]
 
-            return 'Am ' + day.capitalize() + ' wird es' + prob + ' gegen ' + when + ' ' + ('sonnig.' if what == 'sun' else ('regnen.' if what == 'rain' else 'schneien.'))
+                if not hasRain and not hasHail and not hasThunder:
+                    return 'Nein, ich denke nicht.'
+
+                w = hasRain[0] if hasRain else (hasHail[0] if hasHail else hasThunder[0])
+                dt = datetime.fromtimestamp(w['time'])
+                day = self.weekdays[dt.weekday()]
+                prob = ''
+                when = dt.strftime("%H:%M Uhr")
+
+                if w['precipProbability'] < 0.3:
+                    return 'Nein, ich denke nicht.'
+
+                if w['precipProbability'] < 0.75:
+                    prob = ' vermutlich'
+
+                if scale == 'hourly':
+                    return 'Gegen ' + when + ' wird es ' + ('regnen.' if hasRain else ('hageln.' if hasHail else 'Gewitter geben.'))
+                elif len(weather_days) == 1:
+                    return prefix + ' wird es ' + ('regnen.' if hasRain else ('hageln.' if hasHail else 'Gewitter geben.'))
+
+                return 'Am ' + day.capitalize() + ' wird es' + prob + ' gegen ' + when + ' ' + ('regnen.' if hasRain else ('hageln.' if hasHail else 'Gewitter geben.'))
 
         return None
 
@@ -538,6 +565,6 @@ if __name__ == "__main__":
 
     # app.query_weather(None, None, "s710:getForecast", "Hamburg", "morgen nachmittag")
     # app.query_weather(None, None, "s710:getTemperature", None, "jetzt")
-    # app.query_weather(None, None, "s710:hasRain", "London", None)
+    app.query_weather(None, None, "s710:hasSun", None, "übermorgen")
     # app.query_weather(None, None, "s710:hasSnow", "Helsinki", None)
 
