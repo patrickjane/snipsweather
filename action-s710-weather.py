@@ -150,7 +150,7 @@ class App(object):
 
         # ignore unknown/unexpected intents
 
-        if intent_message.intent_name not in self.known_intents:
+        if intent_message.intent.intent_name not in self.known_intents:
             return
 
         self.logger.debug("Intent {} with city {} and time {}".format(intent_message.intent.intent_name, city if city else '-', time if time else '-'))
