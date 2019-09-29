@@ -63,7 +63,7 @@ class App(object):
 
         # parameters
 
-        self.mqtt_host = None
+        self.mqtt_host = "localhost:1883"
         self.mqtt_user = None
         self.mqtt_pass = None
 
@@ -71,6 +71,8 @@ class App(object):
         self.home_location = None
         self.weekdays = ['montag', 'dienstag', 'mittwoch', 'donnerstag', 'freitag', 'samstag', 'sonntag']
         self.day_range_symbols = ['früh', 'vormittag', 'mittag', 'nachmittag', 'abend', 'nacht']
+
+        self.known_intents = ['s710:getForecast','s710:getTemperature','s710:hasRain','s710:hasSun','s710:hasSnow']
 
         homecity = None
         
@@ -146,9 +148,17 @@ class App(object):
         except:
             pass
 
+        # ignore unknown/unexpected intents
+
+        if intent_message.intent_name not in self.known_intents:
+            return
+
         self.logger.debug("Intent {} with city {} and time {}".format(intent_message.intent.intent_name, city if city else '-', time if time else '-'))
 
-        self.query_weather(hermes, intent_message, intent_message.intent.intent_name, city, time)
+        try:
+            self.query_weather(hermes, intent_message, intent_message.intent.intent_name, city, time)
+        except Exception as e:
+            self.logger.error("Failed to query weather ({})".format(e))
 
     # -------------------------------------------------------------------------
     # query_weather
@@ -157,7 +167,11 @@ class App(object):
 
         # get corresponding home assistant service-url + payload
 
-        req_url = self.get_request_url(city, self.home_location)
+        try:
+            req_url = self.get_request_url(city, self.home_location)
+        except Exception as e:
+            self.logger.error("Failed to execute location HTTP request ({})".format(e))
+            return None
 
         if not req_url:
             self.logger.error("Failed to determine forecast URL/parameters, cannot query weather")
@@ -165,7 +179,11 @@ class App(object):
 
         self.logger.debug("Debug: Querying URL [{}]".format(req_url.replace(self.api_key, "API_KEY")))
 
-        req = requests.get(req_url, headers = self.http_headers, params = { 'units': 'si', 'lang': 'de', 'exclude': 'flags,alerts,minutely', 'extend': 'hourly' })
+        try:
+            req = requests.get(req_url, headers = self.http_headers, params = { 'units': 'si', 'lang': 'de', 'exclude': 'flags,alerts,minutely', 'extend': 'hourly' })
+        except Exception as e:
+            self.logger.error("Failed to execute weather HTTP request ({})".format(e))
+            return None
 
         if req.status_code != 200:
             self.logger.error("Failed to query dark sky forecast (HTTP {} / {})".format(req.status_code, req.content.decode('utf-8')[:80] if req.content else "-"))
